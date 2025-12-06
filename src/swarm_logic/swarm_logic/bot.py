@@ -8,8 +8,9 @@ from mapping.mapping_shi import GeneratedMap
 from messages.srv import Mapinfo
 from messages.msg import Map
 class bot(Node):
-    def __init__(self,id,coord=(0,0),color="white",returning=False):
+    def __init__(self,id,parent = None,coord=(1,1),color="white",returning=False,map=GeneratedMap()):
         super().__init__("bot_node")
+        parent.map.grid[coord]= 2
         self.id=id
         self.coord=coord
         self.color=color
@@ -18,8 +19,9 @@ class bot(Node):
         self.follow_leader=None    #initially following none
         self.LOS=3  #line of sight
         self.get_map = self.create_client(Mapinfo, 'map_info')
-        self.map = GeneratedMap()
+        self.map = map
         self.send_map = self.create_publisher(Map,'send_map',10)
+        self.parent = parent #the swarm object that created this bot
     def get_map_info(self,x,y):
         while not self.get_map.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
@@ -36,37 +38,46 @@ class bot(Node):
         msg.status = status
         self.send_map.publish(msg)
     def see(self):
+        points = []
         for x in range(1,self.LOS+1):
-            v = get_map_info(self,self.coord[0]+x,self.coord[1])
+            v = self.get_map_info(self.coord[0]+x,self.coord[1])
             self.map.setValue(self.coord[0]+x,self.coord[1],v)
             self.sendmap(x,self.coord[1],v)
+            points.append((self.coord[0]+x,self.coord[1]))
             if v == 1:
                 break
         for x in range(1,self.LOS+1):
-            v = get_map_info(self,self.coord[0]-x,self.coord[1])
+            v = self.get_map_info(self.coord[0]-x,self.coord[1])
             self.map.setValue(self.coord[0]-x,self.coord[1],v)
             self.sendmap(x,self.coord[1],v)
+            points.append((self.coord[0]-x,self.coord[1]))
             if v == 1:
                 break
+
         for y in range(1,self.LOS+1):
-            v = get_map_info(self,self.coord[0],self.coord[1]+y)
+            v = self.get_map_info(self.coord[0],self.coord[1]+y)
             self.map.setValue(self.coord[0],self.coord[1]+y,v)
             self.sendmap(self.coord[0],y,v)
+            points.append((self.coord[0],self.coord[1]+y))
             if v == 1:
                 break
         for y in range(1,self.LOS+1):
-            v = get_map_info(self,self.coord[0],self.coord[1]-y)
+            v = self.get_map_info(self.coord[0],self.coord[1]-y)
             self.map.setValue(self.coord[0],self.coord[1]-y,v)
             self.sendmap(self.coord[0],y,v)
+            points.append((self.coord[0],self.coord[1]-y))
             if v == 1:
                 break
+        self.parent.map.grid[self.coord]= 2
+        self.parent.update_data()
+        self.parent.map.update_frontiers(points)
     def move(self,coord: tuple):
         if coord == (self.coord[0]+1,self.coord[1]) or (self.coord[0]-1,self.coord[1]) or (self.coord[0],self.coord[1]+1) or (self.coord[0],self.coord[1]-1):
             self.coord = coord
+            self.see()
     def follow_path(self,path):
         for i in range(len(path)):
             self.move(path[i])
-            self.see
     def leader(self):
         self.color="blue"
         self.update_map()
@@ -88,10 +99,3 @@ class bot(Node):
         #publish the id and colour of bot 
         pass
 
-
-def main(args=None):
-    rclpy.init(args=args)
-
-    node=bot()
-    rclpy.spin(node)   
-    rclpy.shutdown()
