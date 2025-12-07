@@ -39,14 +39,14 @@ class Swarm(Node):
         #coord1, coord2, and frontier points are tuples (x, y)
 
 
-        direct_distance = len(self.pathplanner.van(coord1, coord2))
+        direct_distance = len(self.pathplanner.nav(coord1, coord2))
         """""
         approached_count = 0
         increased_count = 0
 
         for fp in self.map.Frontier:
-            dist1 = len(self.pathplanner.van(fp, coord1))
-            dist2 = len(self.pathplanner.van(fp, coord2))
+            dist1 = len(self.pathplanner.nav(fp, coord1))
+            dist2 = len(self.pathplanner.nav(fp, coord2))
 
             if dist2 < dist1:
                 approached_count += 1
@@ -91,10 +91,8 @@ def main():
     swarm = Swarm()
     swarm.see()
     swarm.map.update_frontiers()
-    i = 1000
-    while i > 0:
+    while len(swarm.map.Frontier)>0:
         swarm.bots[0].follow_path(swarm.pathplanner.nav(swarm.bots[0].coord,swarm.chooseFrontier(0)))
-        i -= 1
         swarm.loadmap()
     swarm.loadmap()
 
