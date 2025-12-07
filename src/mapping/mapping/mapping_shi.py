@@ -4,9 +4,12 @@ from rclpy.node import Node
 from std_msgs.msg import Int16
 
 class GeneratedMap: #generated  by bots, shared by all of them
-    def __init__(self):
+    def __init__(self, map_size = 60):
         self.grid = {}
         self.Frontier = set()
+        for x in range(0,map_size):
+            for y in range(0,map_size):
+                self.grid[(x,y)] = 3 #unexplored
 
 
 
@@ -15,7 +18,7 @@ class GeneratedMap: #generated  by bots, shared by all of them
         if (x, y) in self.grid:
             return self.grid[(x, y)]
         else:
-            return None
+            return 3  #out of bounds 
 
     def setValue(self,x, y, value): #0 for free, 1 for obtacled, No value for unexplored
         self.grid[(x, y)] = value
@@ -32,7 +35,7 @@ class GeneratedMap: #generated  by bots, shared by all of them
         return result
 
 
-    def neighbors(x, y):
+    def neighbors(self,x, y):
         # 4-directional neighbors
         dirs = [(1,0), (-1,0), (0,1), (0,-1)]
         return [(x+dx, y+dy) for dx, dy in dirs]
@@ -43,22 +46,22 @@ class GeneratedMap: #generated  by bots, shared by all of them
         if not self.grid:
             return None
 
-        xs = [x for (x, y) in GeneratedMap.grid.keys()]
-        ys = [y for (x, y) in GeneratedMap.grid.keys()]
+        xs = [x for (x, y) in self.grid.keys()]
+        ys = [y for (x, y) in self.grid.keys()]
         return min(xs), max(xs), min(ys), max(ys)
 
 
     def update_frontiers(self):
+        self.Frontier.clear()
         for (x, y) in self.grid:
           if self.grid[(x,y)] == 0:
-            for nx, ny in GeneratedMap.neighbors(x, y):
-                if (nx, ny) not in GeneratedMap.grid:  # unexplored neighbor
-                    GeneratedMap.Frontier.add((x, y))
-                    break  # no need to check other neighbors
+            for nx, ny in self.neighbors(x, y):
+                if self.grid[(nx, ny)] == 3:  # unexplored neighbor
+                    self.Frontier.add((x, y))
 
     def printmap(self):
         # render the known explored region __ is so python treats it as a special function and prints a string when we code print(str)
-        b = GeneratedMap.bounds()
+        b = self.bounds()
         if b is None:
             print("<empty map>")
 

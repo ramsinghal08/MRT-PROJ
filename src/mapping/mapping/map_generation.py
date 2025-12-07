@@ -7,14 +7,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
 
-class mapgeneration(Node):
+class mapgeneration(Node): # 1 = filled 0 = blank 
     def __init__(self):
         super().__init__('map_generator')
         self.map_size = 100
         self.resolution = 0.5
-        self.Map = self.makemap(self)
+        self.Map = self.makemap()
         self.map_publisher_ = self.create_service(Mapinfo, 'map_info',self.handle_map_request)
-    def makemap(size=60, num_attempts=2000, min_gap=2):
+    def makemap(self,size=60, num_attempts=2000, min_gap=2):
         grid = np.zeros((size, size), int)
 
         grid[0, :] = grid[-1, :] = 1
@@ -41,12 +41,17 @@ class mapgeneration(Node):
 
             if np.sum(sub_grid) == 0:
                 grid[x : x + w, y : y + h] = 1
-
         return grid
+    def show_map(self):
+            plt.imshow(self.Map)                     
+            plt.colorbar()                       
+            plt.show()    
+
+
 
 
     def handle_map_request(self, request, response):
-        response.status = self.Map[request.x][request.y]
+        response.status = int(self.Map[request.x][request.y])
         return response 
 def main(args=None):
     rclpy.init(args=args)

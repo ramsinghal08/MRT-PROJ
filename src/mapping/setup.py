@@ -11,7 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'rclpy', 'swarm_logic'],
     zip_safe=True,
     maintainer='nishant',
     maintainer_email='nishantmiglani123@gmail.com',
@@ -24,6 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'generate = mapping.map_generation:main',
+            'explore = mapping.exploring:main'
         ],
     },
 )
