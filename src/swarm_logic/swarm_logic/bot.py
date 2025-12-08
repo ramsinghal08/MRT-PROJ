@@ -137,7 +137,7 @@ class bot(Node):
             self.coord = coord
             self.see()
 
-            if self.parent and i%3 == 0:            
+            if self.parent and self.i%3 == 0:            
                 self.parent.loadmap()
     def follow_path(self,path):
         for i in range(len(path)):
