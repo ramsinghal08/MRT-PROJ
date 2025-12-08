@@ -22,6 +22,7 @@ class bot(Node):
         self.map = map
         self.send_map = self.create_publisher(Map,'send_map',10)
         self.parent = parent #the swarm object that created this bot
+        self.i = 0
     def get_map_info(self,x,y):
         while not self.get_map.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
@@ -131,9 +132,13 @@ class bot(Node):
         self.parent.map.update_frontiers()
     
     def move(self,coord: tuple):
+        self.i += 1
         if coord == (self.coord[0]+1,self.coord[1]) or (self.coord[0]-1,self.coord[1]) or (self.coord[0],self.coord[1]+1) or (self.coord[0],self.coord[1]-1):
             self.coord = coord
             self.see()
+
+            if self.parent and self.i%3 == 0:            
+                self.parent.loadmap()
     def follow_path(self,path):
         for i in range(len(path)):
             self.move(path[i])
