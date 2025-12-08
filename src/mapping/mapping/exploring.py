@@ -11,11 +11,11 @@ import numpy as np                   # Imports numpy to create/load numeric data
 from path_planning.path import pathplanning
                       
 class Swarm(Node):
+    pastchosen_Frontiers = set()
     def __init__(self, bot_count=1):
         super().__init__('swarm')
         self.map = GeneratedMap()
         self.bots = []
-        self.pastchosen_Frontiers = set()
         self.bot_count = bot_count
         self.pathplanner = pathplanning(self.map)
         self.data = np.full((60,60),3)  # Initialize a 60x60 map with unknown values
@@ -74,13 +74,13 @@ class Swarm(Node):
         costs = {}
         cost = (0,0,10**18)
         for (x,y) in self.map.Frontier:
-          if (x,y) not in self.pastchosen_Frontiers: 
+          if (x,y) not in Swarm.pastchosen_Frontiers: 
             costs[(x,y)]= self.cost(self.bots[i].coord, (x,y),cost[2])
             if costs[(x,y)]:
                 cost = (x,y,costs[(x,y)])
         best_coord = (cost[0],cost[1])
         self.get_logger().info(f"Best frontier chosen at {best_coord} with cost {cost[2]}")
-        self.pastchosen_Frontiers.add(best_coord)
+        Swarm.pastchosen_Frontiers.add(best_coord)
         return best_coord
 
 
