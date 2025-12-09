@@ -39,8 +39,10 @@ class Swarm(Node):
     def distance(self, coord1: tuple, coord2: tuple):
         return abs(coord1[0] - coord2[0]) + abs(coord1[1] - coord2[1])
     def sort_frontiers(self,i):
+        self.frontiercosts[i] = {}
         for f in self.map.Frontier.keys():
-            self.frontiercosts[i][f] = self.distance(self.bots[i].coord,f)
+            if f not in self.pastchosen_Frontiers:
+                self.frontiercosts[i][f] = self.distance(self.bots[i].coord,f)
     def cost(self, coord1: tuple, coord2: tuple):
         direct_distance = len(self.pathplanner.nav(coord1, coord2))
         return direct_distance
@@ -48,8 +50,11 @@ class Swarm(Node):
         direct_distance = len(self.pathplanner.van(coord1, coord2,x))
         return direct_distance
     def oldmethod(self,i):
+        if not self.map.Frontier:
+            return self.bots[i].coord
         self.sort_frontiers(i)
-        min_cost = 10**18
+        if not self.frontiercosts[i]:
+            return self.bots[i].coord
         coord, min_v = min(self.frontiercosts[i].items(), key=lambda x: x[1])
         while True:
             self.frontiercosts[i][coord] = self.cost(self.bots[i].coord,coord)
@@ -64,20 +69,22 @@ class Swarm(Node):
     def chooseFrontier(self,i): #if leader
         self.get_logger().info(f"Bot {i} choosing frontier")
         self.get_logger().info(f"Current frontiers: {self.map.Frontier.keys()}")
+        if not self.map.Frontier:
+            return self.bots[i].coord
         def return_coord(best_coord):
             if best_coord == (-1,-1):
-                return None
+                return self.bots[i].coord
+            if best_coord == self.bots[i].coord:
+                return best_coord
             self.pastchosen_Frontiers.add(best_coord)
             del self.frontiercosts[i][best_coord]
             self.get_logger().info(f"Bot {i} chose frontier {best_coord}")
-            del self.map.Frontier[best_coord]
             return best_coord
         inf = 10**18
         mincost = (-1,-1,inf)
         to_remove = []
-        x = len(self.frontiercosts[i])
         for coord in self.frontiercosts[i].keys():
-            if coord not in self.map.Frontier.keys():
+            if (coord not in self.map.Frontier.keys()) or (coord in self.pastchosen_Frontiers):
                 to_remove.append(coord)
         for coord in to_remove:
             del self.frontiercosts[i][coord]
@@ -97,7 +104,7 @@ class Swarm(Node):
                 if self.frontiercosts[i][coord] < mincost[2]:
                     best_coord = coord
                     break
-                         # if new frontiers were found
+            #if new frontiers is better
             best_coord = (mincost[0],mincost[1])
             break 
             
@@ -116,6 +123,8 @@ def main():
     paths = []
     for i in range(swarm.bot_count):
         path = swarm.pathplanner.nav(swarm.bots[i].coord, swarm.chooseFrontier(i))
+        next_step = path.pop(0) if path else swarm.bots[i].coord
+        swarm.bots[i].move(next_step)
         paths.append(path)
 
     # Step loop: move each bot one step per iteration
@@ -125,10 +134,27 @@ def main():
                 next_step = paths[i].pop(0)  # take first step
                 swarm.bots[i].move(next_step)
             else:
-                paths[i] = swarm.pathplanner.nav(swarm.bots[i].coord, swarm.chooseFrontier(i))
+                if len(swarm.map.Frontier.keys())>0:
+                    paths[i] = swarm.pathplanner.nav(swarm.bots[i].coord, swarm.chooseFrontier(i))
                 if paths[i]:  # if a new path was found
                     next_step = paths[i].pop(0) 
                     swarm.bots[i].move(next_step)
+        for x in range(swarm.bot_count):
+            swarm.map.grid[swarm.bots[x].coord] = 2
+        swarm.update_data()
+        swarm.loadmap()
+    for i in range(swarm.bot_count):
+        if paths[i]:
+            while paths[i]:
+                next_step = paths[i].pop(0)
+                swarm.bots[i].move(next_step)
+                for x in range(swarm.bot_count):
+                    swarm.map.grid[swarm.bots[x].coord] = 2
+                swarm.update_data()
+                swarm.loadmap()
+    
+    plt.draw()
+    plt.pause(100000000000)
     
 
 if __name__ == '__main__':

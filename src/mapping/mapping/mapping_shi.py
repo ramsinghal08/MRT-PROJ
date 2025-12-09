@@ -55,14 +55,11 @@ class GeneratedMap: #generated  by bots, shared by all of them
     def update_frontiers(self,id):
         self.Frontier = {}
         for (x, y) in self.grid:
-          if self.grid[(x,y)] == 0:
+          if self.grid[(x,y)] == 0 and (x,y):
             for nx, ny in self.neighbors(x, y):
                 if self.grid[(nx, ny)] == 3:  # unexplored neighbor
                     self.Frontier[(x, y)] = id # marking which bot found this frontier
                     break
-        for (x,y) in self.parent.pastchosen_Frontiers:
-            if (x,y) in self.Frontier.keys():
-                del self.Frontier[(x,y)]
 
     def printmap(self):
         # render the known explored region __ is so python treats it as a special function and prints a string when we code print(str)
