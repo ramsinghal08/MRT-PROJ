@@ -11,10 +11,10 @@ import numpy as np                   # Imports numpy to create/load numeric data
 from path_planning.path import pathplanning
                       
 class Swarm(Node):
-    pastchosen_Frontiers = set()
+
     def __init__(self, bot_count=1):
         super().__init__('swarm')
-        self.map = GeneratedMap()
+        self.map = GeneratedMap(self)
         self.bots = []
         self.bot_count = bot_count
         self.pathplanner = pathplanning(self.map)
@@ -22,6 +22,8 @@ class Swarm(Node):
         for i in range(bot_count):
             new_bot = bot(id=i,parent = self,map=self.map)
             self.bots.append(new_bot)
+        self.pastchosen_Frontiers = set()
+        self.frontiercosts = [{} for _ in range(bot_count)]
     def loadmap(self):
         plt.clf()
         plt.imshow(self.data, vmin = 0, vmax = 3)                     
@@ -34,62 +36,81 @@ class Swarm(Node):
     def see(self):
         for b in self.bots:
             b.see()
-    
-    def cost(self, coord1: tuple, coord2: tuple,x:int): #I used coord1 as bots current location in the later code, pls confirm
-
-        #coord1, coord2, and frontier points are tuples (x, y)
-
-
-        direct_distance = len(self.pathplanner.van(coord1, coord2,x))
-        """""
-        approached_count = 0
-        increased_count = 0
-
-        for fp in self.map.Frontier:
-            dist1 = len(self.pathplanner.nav(fp, coord1))
-            dist2 = len(self.pathplanner.nav(fp, coord2))
-
-            if dist2 < dist1:
-                approached_count += 1
-            elif dist2 > dist1:
-                increased_count += 1
-
-        DISTANCE_WEIGHT = 1.0
-        APPROACHED_WEIGHT = 2.0
-        INCREASED_WEIGHT = 1.5
-
-        # avoid division by zero
-        if increased_count == 0:
-            increased_count = 1 
-        
-
-        total_cost = (direct_distance * (approached_count ** APPROACHED_WEIGHT)/(increased_count ** INCREASED_WEIGHT))
-        """
-
+    def distance(self, coord1: tuple, coord2: tuple):
+        return abs(coord1[0] - coord2[0]) + abs(coord1[1] - coord2[1])
+    def sort_frontiers(self,i):
+        for f in self.map.Frontier.keys():
+            self.frontiercosts[i][f] = self.distance(self.bots[i].coord,f)
+    def cost(self, coord1: tuple, coord2: tuple):
+        direct_distance = len(self.pathplanner.nav(coord1, coord2))
         return direct_distance
+    def old_cost(self, coord1: tuple, coord2: tuple,x:int):
+        direct_distance = len(self.pathplanner.van(coord1, coord2,x))
+        return direct_distance
+    def oldmethod(self,i):
+        self.sort_frontiers(i)
+        min_cost = 10**18
+        coord, min_v = min(self.frontiercosts[i].items(), key=lambda x: x[1])
+        while True:
+            self.frontiercosts[i][coord] = self.cost(self.bots[i].coord,coord)
+            coordx, min_v = min(self.frontiercosts[i].items(), key=lambda x: x[1])
+            if coordx == coord:
+                break
+            else:
+                coord = coordx
+        return coord
+
+    
     def chooseFrontier(self,i): #if leader
-        self.get_logger().info(str(self.map.Frontier))
-        self.get_logger().info("chosing frontier")
-        self.get_logger().info(str(len(self.map.Frontier)))
-        costs = {}
-        cost = (0,0,10**18)
-        for (x,y) in self.map.Frontier:
-          if (x,y) not in Swarm.pastchosen_Frontiers: 
-            costs[(x,y)]= self.cost(self.bots[i].coord, (x,y),cost[2])
-            if costs[(x,y)]:
-                cost = (x,y,costs[(x,y)])
-        best_coord = (cost[0],cost[1])
-        self.get_logger().info(f"Best frontier chosen at {best_coord} with cost {cost[2]}")
-        Swarm.pastchosen_Frontiers.add(best_coord)
-        return best_coord
+        self.get_logger().info(f"Bot {i} choosing frontier")
+        self.get_logger().info(f"Current frontiers: {self.map.Frontier.keys()}")
+        def return_coord(best_coord):
+            if best_coord == (-1,-1):
+                return None
+            self.pastchosen_Frontiers.add(best_coord)
+            del self.frontiercosts[i][best_coord]
+            self.get_logger().info(f"Bot {i} chose frontier {best_coord}")
+            del self.map.Frontier[best_coord]
+            return best_coord
+        inf = 10**18
+        mincost = (-1,-1,inf)
+        to_remove = []
+        x = len(self.frontiercosts[i])
+        for coord in self.frontiercosts[i].keys():
+            if coord not in self.map.Frontier.keys():
+                to_remove.append(coord)
+        for coord in to_remove:
+            del self.frontiercosts[i][coord]
+        for f in self.map.Frontier.keys():
+            if (f not in self.frontiercosts[i].keys()) and self.map.Frontier[f] == i:
+                self.frontiercosts[i][f] = self.cost(self.bots[i].coord,f)
+                if self.frontiercosts[i][f] < mincost[2]:
+                    mincost = (f[0],f[1],self.frontiercosts[i][f])   
+        
+        if (mincost[0],mincost[1]) == (-1,-1): #no new frontiers uncovered
+            best_coord = self.oldmethod(i)
+            return return_coord(best_coord)
+        while True:
+            coord, min_v = min(self.frontiercosts[i].items(), key=lambda x: x[1])
+            if min_v<mincost[2]: # checking if a previous found frontier is better
+                self.frontiercosts[i][coord] = self.cost(self.bots[i].coord,coord)
+                if self.frontiercosts[i][coord] < mincost[2]:
+                    best_coord = coord
+                    break
+                         # if new frontiers were found
+            best_coord = (mincost[0],mincost[1])
+            break 
+            
+             
+        return return_coord(best_coord)
 
 
 
 def main():
     rclpy.init(args=None)
-    swarm = Swarm(3)
+    swarm = Swarm(10)
     swarm.see()
-    swarm.map.update_frontiers()
+    swarm.map.update_frontiers(0)
 
     # Compute initial paths for each bot
     paths = []
@@ -98,18 +119,17 @@ def main():
         paths.append(path)
 
     # Step loop: move each bot one step per iteration
-    while len(swarm.map.Frontier) > 0:
-        all_done = True
+    while len(swarm.map.Frontier.keys()) > 0:
         for i in range(swarm.bot_count):
             if paths[i]:  # if bot still has steps
                 next_step = paths[i].pop(0)  # take first step
                 swarm.bots[i].move(next_step)
-                all_done = False
-
-        if all_done:
-            # recompute paths once frontiers change
-            for i in range(swarm.bot_count):
+            else:
                 paths[i] = swarm.pathplanner.nav(swarm.bots[i].coord, swarm.chooseFrontier(i))
+                if paths[i]:  # if a new path was found
+                    next_step = paths[i].pop(0) 
+                    swarm.bots[i].move(next_step)
+    
 
 if __name__ == '__main__':
     main()

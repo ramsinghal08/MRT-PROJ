@@ -8,7 +8,7 @@ from mapping.mapping_shi import GeneratedMap
 from messages.srv import Mapinfo
 from messages.msg import Map
 class bot(Node):
-    def __init__(self,id,parent = None,coord=(1,1),color="white",returning=False,map=GeneratedMap()):
+    def __init__(self,id,parent, map ,coord=(1,1),color="white",returning=False,):
         super().__init__("bot_node")
         parent.map.grid[coord]= 2
         self.id=id
@@ -129,16 +129,18 @@ class bot(Node):
     
         self.parent.map.grid[self.coord] = 2
         self.parent.update_data()
-        self.parent.map.update_frontiers()
+        self.parent.map.update_frontiers(self.id)
     
     def move(self,coord: tuple):
         self.i += 1
-        if coord == (self.coord[0]+1,self.coord[1]) or (self.coord[0]-1,self.coord[1]) or (self.coord[0],self.coord[1]+1) or (self.coord[0],self.coord[1]-1):
+        if coord == (self.coord[0]+1,self.coord[1]) or (self.coord[0]-1,self.coord[1]) or (self.coord[0],self.coord[1]+1) or (self.coord[0],self.coord[1]-1) or (coord==self.coord):
             self.coord = coord
             self.see()
+        for (x,y) in self.parent.frontiercosts[self.id].keys():
+                self.parent.frontiercosts[self.id][(x,y)] -= 1
 
-            if self.parent and self.i%3 == 0:            
-                self.parent.loadmap()
+                 
+        self.parent.loadmap()
     def follow_path(self,path):
         for i in range(len(path)):
             self.move(path[i])

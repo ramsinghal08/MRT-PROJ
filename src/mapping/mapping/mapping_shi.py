@@ -4,9 +4,10 @@ from rclpy.node import Node
 from std_msgs.msg import Int16
 
 class GeneratedMap: #generated  by bots, shared by all of them
-    def __init__(self, map_size = 60):
+    def __init__(self,parent,map_size = 60):
+        self.parent = parent
         self.grid = {}
-        self.Frontier = set()
+        self.Frontier = {}
         for x in range(0,map_size):
             for y in range(0,map_size):
                 self.grid[(x,y)] = 3 #unexplored
@@ -51,13 +52,17 @@ class GeneratedMap: #generated  by bots, shared by all of them
         return min(xs), max(xs), min(ys), max(ys)
 
 
-    def update_frontiers(self):
-        self.Frontier.clear()
+    def update_frontiers(self,id):
+        self.Frontier = {}
         for (x, y) in self.grid:
           if self.grid[(x,y)] == 0:
             for nx, ny in self.neighbors(x, y):
                 if self.grid[(nx, ny)] == 3:  # unexplored neighbor
-                    self.Frontier.add((x, y))
+                    self.Frontier[(x, y)] = id # marking which bot found this frontier
+                    break
+        for (x,y) in self.parent.pastchosen_Frontiers:
+            if (x,y) in self.Frontier.keys():
+                del self.Frontier[(x,y)]
 
     def printmap(self):
         # render the known explored region __ is so python treats it as a special function and prints a string when we code print(str)
