@@ -24,6 +24,10 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            "branch_node=swarm_logic.branch:main",
+            "bot_node=swarm_logic.bot:main",
+            "execution_node=swarm_logic.execution:main",
+            "visual_node=swarm_logic.visuals:main"
         ],
     },
 )

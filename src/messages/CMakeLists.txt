@@ -12,6 +12,14 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Map.msg"
   "srv/Mapinfo.srv"
+  "srv/LeaderMove.srv"
+  "srv/MoveMembers.srv"
+  "msg/BranchMsg.msg"
+  "msg/InfoMsg.msg"
+  "msg/MapDataMsg.msg"
+  "msg/PathMsg.msg"
+  "msg/TaskInfo.msg"
+  "msg/VisualMsg.msg"
 )
 # uncomment the following section in order to fill in
 # further dependencies manually.
