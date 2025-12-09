@@ -26,7 +26,9 @@ class Swarm(Node):
         self.frontiercosts = [{} for _ in range(bot_count)]
     def loadmap(self):
         plt.clf()
-        plt.imshow(self.data, vmin = 0, vmax = 3)                     
+        plt.imshow(self.data, vmin = 0, vmax = 4)
+        for label, coord in self.map.shelves.items():
+            plt.text(coord[1], coord[0], str(label), color='red', fontsize=8)               
         plt.colorbar()                       
         plt.draw() 
         plt.pause(0.000001)
@@ -152,9 +154,14 @@ def main():
                     swarm.map.grid[swarm.bots[x].coord] = 2
                 swarm.update_data()
                 swarm.loadmap()
-    
+
+    swarm.map.identify_shelves()
+    swarm.update_data()
+    swarm.get_logger().info(f"Shelves: {swarm.map.shelves}")
+    swarm.loadmap()
     plt.draw()
-    plt.pause(100000000000)
+    plt.pause(5)
+    plt.close()
     
 
 if __name__ == '__main__':
