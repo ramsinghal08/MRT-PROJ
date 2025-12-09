@@ -138,9 +138,6 @@ class bot(Node):
             self.see()
         for (x,y) in self.parent.frontiercosts[self.id].keys():
                 self.parent.frontiercosts[self.id][(x,y)] -= 1
-
-                 
-        self.parent.loadmap()
     def follow_path(self,path):
         for i in range(len(path)):
             self.move(path[i])

@@ -108,7 +108,7 @@ class Swarm(Node):
 
 def main():
     rclpy.init(args=None)
-    swarm = Swarm(3)
+    swarm = Swarm(1)
     swarm.see()
     swarm.map.update_frontiers(0)
 
@@ -129,6 +129,8 @@ def main():
                 if paths[i]:  # if a new path was found
                     next_step = paths[i].pop(0) 
                     swarm.bots[i].move(next_step)
+        swarm.loadmap()
+    plt.draw()
     
 
 if __name__ == '__main__':
