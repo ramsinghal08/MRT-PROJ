@@ -38,11 +38,10 @@ class pathplanning(Node):
             return neighbors
             
 
-    def nav(self, start:tuple, end:tuple):
+    def nav(self,start:tuple,end:tuple): ## elementary path finding algorithim for now please keep the input and output types same. 
         """Returns a list of tuples as a path from the given start to the given end in the given maze"""
-
         # Create start and end node
-        start_node =Point(None, start)
+        start_node = Point(None, start)
         start_node.g = start_node.h = start_node.f = 0
         end_node = Point(None, end)
         end_node.g = end_node.h = end_node.f = 0
@@ -86,15 +85,15 @@ class pathplanning(Node):
                 node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
 
                 # Make sure within range
-                if node_position[0] > (59) or node_position[0] < 0 or node_position[1] > (59) or node_position[1] < 0:
-                    continue
+                #if node_position[0] > (60) or node_position[0] < 0 or node_position[1] > (60) or node_position[1] < 0:
+                #    continue
 
                 # Make sure walkable terrain
-                if map.get(node_position[0],node_position[1]) != 0:
+                if self.grid.get(node_position,1) != 0:
                     continue
 
                 # Create new node
-                new_node = Node(current_node, node_position)
+                new_node = Point(current_node, node_position)
 
                 # Append
                 children.append(new_node)
@@ -158,4 +157,3 @@ class pathplanning(Node):
                 return []
             new_paths = []
         return path
-    
