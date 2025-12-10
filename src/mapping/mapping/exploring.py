@@ -9,6 +9,7 @@ from swarm_logic.bot import bot
 import matplotlib.pyplot as plt      # Imports matplotlib for plotting
 import numpy as np                   # Imports numpy to create/load numeric data
 from path_planning.path import pathplanning
+from messages.msg import BotMove 
                       
 class Swarm(Node):
 
@@ -26,6 +27,8 @@ class Swarm(Node):
         self.frontiercosts = [{} for _ in range(bot_count)]
         self.sendbotinfo = self.create_publisher(Map,'bot_info',10)
         self.sendshelves = self.create_publisher(Map,'shelf_info',10)
+        self.to_move = self.create_subscription(BotMove,'bot_move',self.updatetasks,10)
+        self.sentmap = []
     def loadmap(self):
         plt.clf()
         plt.imshow(self.data, vmin = 0, vmax = 4)
@@ -34,6 +37,11 @@ class Swarm(Node):
         plt.colorbar()                       
         plt.draw() 
         plt.pause(0.000001)
+    def updatetasks(self,msg):
+        i = msg.bot_id
+        x = msg.final_x
+        y = msg.final_y
+        self.bots[i].path = self.pathplanner.nav(self.bots[i].coord,(x,y))
     def send_bot_info(self):
         for i in range(self.bot_count):
             msg = Map()
@@ -183,6 +191,18 @@ def main():
     swarm.loadmap()
     swarm.send_bot_info()
     swarm.send_shelves()
+    while True:
+        rclpy.spin_once(swarm,timeout_sec = 0.1)
+        for i in range(swarm.bot_count):
+            if swarm.bots[i].path:
+                next_step = swarm.bots[i].path.pop(0)
+                swarm.bots[i].justmove(next_step)
+                if not swarm.bots[i].path:
+                    msg = Map()
+                    msg.status = swarm.bots[1].id
+                    msg.x = swarm.bots[i].coord[0]
+                    msg.y = swarm.bots[i].coord[1]
+                    swarm.sendbotinfo.publish(msg)
     plt.draw()
     plt.pause(1000000000)
 

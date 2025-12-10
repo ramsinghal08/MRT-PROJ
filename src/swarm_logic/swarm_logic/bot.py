@@ -33,6 +33,8 @@ class bot(Node):
         rclpy.spin_until_future_complete(self, future)
         return future.result().status 
     def sendmap(self,x,y,status):
+        if (x,y) in self.parent.sentmap:
+            return 
         msg = Map()
         msg.x = x 
         msg.y = y
@@ -40,7 +42,8 @@ class bot(Node):
         self.send_map.publish(msg)
         self.get_logger().info(f"Sent map info for {x},{y} with status {status}")
         #get the number of subscribers to the send_map topic
-        self.get_logger().info(f"Number of subscribers to send_map topic: {self.send_map.get_subscription_count()}")    
+        self.get_logger().info(f"Number of subscribers to send_map topic: {self.send_map.get_subscription_count()}")  
+        self.parent.sentmap.append((x,y))  
 
     def see(self):
         cx, cy = self.coord 
@@ -135,33 +138,17 @@ class bot(Node):
         self.parent.map.update_frontiers(self.id)
     
     def move(self,coord: tuple):
-        self.i += 1
         if coord == (self.coord[0]+1,self.coord[1]) or (self.coord[0]-1,self.coord[1]) or (self.coord[0],self.coord[1]+1) or (self.coord[0],self.coord[1]-1) or (coord==self.coord):
             self.coord = coord
             self.see()
         for (x,y) in self.parent.frontiercosts[self.id].keys():
                 self.parent.frontiercosts[self.id][(x,y)] -= 1
-    def follow_path(self,path):
-        for i in range(len(path)):
-            self.move(path[i])
-    def leader(self):
-        self.color="blue"
-        self.update_map()
-    def follower(self):
-        self.color="green"
-        self.update_map()
-    def explorer(self):
-        self.color="yellow"
-        self.update_map()
-    def is_returning(self):
-        self.returning=True
-        self.color="red"
-        self.update_map()
-    def follow(self,leader):
-        self.follow_leader=leader
-    def is_leader(self):
-        return self.color=="blue"
-    def update_map(self): #called everytime a bot object is made or colour updated so that map can be updated
-        #publish the id and colour of bot 
-        pass
+    def justmove(self,coord):
+        self.map.grid[self.coord] = 0
+        if coord == (self.coord[0]+1,self.coord[1]) or (self.coord[0]-1,self.coord[1]) or (self.coord[0],self.coord[1]+1) or (self.coord[0],self.coord[1]-1) or (coord==self.coord):
+            self.coord = coord
+        self.map.grid[self.coord] = 2
+        self.parent.update_data()
+        self.parent.loadmap()
+
 
