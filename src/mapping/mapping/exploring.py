@@ -41,6 +41,12 @@ class Swarm(Node):
             msg.y = self.bots[i].coord[1]
             msg.status = self.bots[i].id
             self.sendbotinfo.publish(msg)
+        msg=Map()
+        msg.x=0
+        msg.y=0
+        msg.status=0
+        self.sendbotinfo.publish(msg)
+        self.get_logger().info("the bots data is sent ")
     def send_shelves(self):
         for label, coord in self.map.shelves.items():
             msg = Map()
