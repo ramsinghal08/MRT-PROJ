@@ -1,35 +1,45 @@
-
 import rclpy 
 import sys
 from rclpy.node import Node
-from std_msgs.msg import Int16
-from mapping.mapping_shi import GeneratedMap
-from messages.srv import Mapinfo
-from messages.msg import Map
-from messages.msg import Roverpath
 from path_planning.path import pathplanning
-#import Explored map 
+from messages.msg import Roverpath
+from messages.msg import Map
 
-class publishpath(Node): 
-    def __init__(self): #map is a class with map.grid being a dictionary with key (x,y) and value status, with 0 for clear 
-        super().__init__("path_planning_node")
-        self.map =  #Load the explored map here
+class publishpath(Node):
+    def __init__(self):
+        self.map={}
+        super().__init__("publish_path_node")
+        #edit topic name later
+        self.task_subscription_ = self.create_subscription(Roverpath, "topic_name", self.task_callback, 10)
+        self.map_subscription_ = self.create_subscription(Map, "send_map", self.map_callback, 10)
+        self.path_publisher_ = self.create_publisher(Roverpath, 'path_info', 10)
+
+        self.timer = self.create_timer(1.0, self.path_publisher_)
+
+    def task_callback(self, msg):
+        self.start=msg.path[0]
+        self.end=msg.path[1]
+        self.id=msg.roverid
+
+    def map_callback(self, msg):
+        new_point={(msg.x,msg.y):msg.status}
+        self.map.update(new_point)        
+
+
+    def publish_path(self):
+        msg=Roverpath
         self.pathplanner = pathplanning(self.map)
-        self.get_logger().info("Path Planning Node has been started")
-        self.publisher=self.create_publisher(Roverpath,'path', 10)
+        path = self.pathplanner.nav(self.start, self.end)
+        msg.roverid=self.id
+        msg.path=path
+        self.path_publisher_.publish(msg)
 
-
-    def publish_path(self,request,response):
-        response= self.pathplanner(map,request[0],request[1])
-        self.publisher.publish(response)
-
-def main(args=None):
-    rclpy.init(args=args)
-
-    node = publishpath()
+def main():
+    rclpy.init(args=None)
+    node = publishpath()  
     rclpy.spin(node)
+    node.destroy_node()
     rclpy.shutdown()
 
-
 if __name__ == '__main__':
-    main() 
+    main()
