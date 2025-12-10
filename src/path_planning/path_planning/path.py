@@ -24,7 +24,7 @@ class Point():
 class pathplanning(Node): 
     def __init__(self,map): #map is a class with map.grid being a dictionary with key (x,y) and value status, with 0 for clear 
         self.map=map
-        self.grid=map.grid
+        self.grid = getattr(map, 'grid', map)
         super().__init__("path_planning_node")
 
     def get_neighbors(self,pos:tuple):
