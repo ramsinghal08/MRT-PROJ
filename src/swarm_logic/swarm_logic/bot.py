@@ -136,21 +136,14 @@ class bot(Node):
         self.parent.map.update_frontiers(self.id)
     
     def move(self,coord: tuple):
-        if coord == (self.coord[0]+1,self.coord[1]) or (self.coord[0]-1,self.coord[1]) or (self.coord[0],self.coord[1]+1) or (self.coord[0],self.coord[1]-1) or (coord==self.coord):
-            self.coord = coord
-            self.see()
+        self.coord = coord
+        self.see()
         for (x,y) in self.parent.frontiercosts[self.id].keys():
                 self.parent.frontiercosts[self.id][(x,y)] -= 1
     def justmove(self,coord):
-        if self.map.grid[coord] != 0:
-            if self.path2:
-                self.path1.append(coord)
-                return 
-            self.path2.append(coord)
-            return 
         self.map.grid[self.coord] = 0
-        if (coord == (self.coord[0]+1,self.coord[1]) or (self.coord[0]-1,self.coord[1]) or (self.coord[0],self.coord[1]+1) or (self.coord[0],self.coord[1]-1) or (coord==self.coord)):
-            self.coord = coord
+        self.coord = coord
+        self.get_logger().info(f"bot{self.id} moved to {coord}")
         self.map.grid[self.coord] = 2
         self.parent.update_data()
         self.parent.loadmap()

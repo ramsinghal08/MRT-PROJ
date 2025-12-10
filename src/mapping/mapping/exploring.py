@@ -47,11 +47,14 @@ class Swarm(Node):
             y1 = msg.init_y
             self.bots[i].path1 = self.pathplanner.nav(self.bots[i].coord,(x1,y1))
             self.bots[i].path2 = self.pathplanner.nav((x1,y1),(x2,y2))
+            self.get_logger().info(f"bot{i} going to {(x1,y1)} and then {(x2,y2)}")
         else:
             i = msg.bot_id
             x2 = msg.final_x
             y2 = msg.final_y
-            self.bots[i].path1 = self.pathplanner.nav(self.bots[i].coord,(x2,y2))
+            self.bots[i].path2 = self.pathplanner.nav(self.bots[i].coord,(x2,y2))
+            self.bots[i].path1 = []
+            self.get_logger().info(f"bot{i} going to {(x2,y2)}")
             
     def send_bot_info(self):
         for i in range(self.bot_count):
@@ -214,6 +217,10 @@ def main():
                     msg.x = swarm.bots[i].coord[0]
                     msg.y = swarm.bots[i].coord[1]
                     swarm.sendbotinfo.publish(msg)
+        for x in range(swarm.bot_count):
+            swarm.map.grid[swarm.bots[x].coord] = 2
+        swarm.update_data()
+        swarm.loadmap()
     
 
 if __name__ == '__main__':
