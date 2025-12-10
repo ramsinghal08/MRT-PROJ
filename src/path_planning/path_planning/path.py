@@ -3,8 +3,7 @@ import sys
 from rclpy.node import Node
 from std_msgs.msg import Int16
 from mapping.mapping_shi import GeneratedMap
-
-
+import heapq
 
 class Point():
     """A node class for A* Pathfinding"""
@@ -48,33 +47,25 @@ class pathplanning(Node):
 
         # Initialize both open and closed list
         open_list = []
-        closed_list = []
-
+        closed_list = set()
+        g_score = {start_node.position:0}
         # Add the start node
-        open_list.append(start_node)
+        open_list.append((start_node.f,0,start_node))
 
         # Add a maximum iteration limit to prevent infinite loops
-        max_iterations = 1000
         iterations = 0
 
         # Loop until you find the end
         while len(open_list) > 0:
-            iterations += 1
-            if iterations > max_iterations:
-                self.get_logger().info("Pathfinding exceeded maximum iterations. Terminating.")
-                return []
+            #if iterations > max_iterations:
+             #   self.get_logger().info("Pathfinding exceeded maximum iterations. Terminating.")
+              #  return []
 
             # Get the current node
-            current_node = open_list[0]
-            current_index = 0
-            for index, item in enumerate(open_list):
-                if item.f < current_node.f:
-                    current_node = item
-                    current_index = index
+            f,k,current_node = heapq.heappop(open_list)
 
             # Pop current off open list, add to closed list
-            open_list.pop(current_index)
-            closed_list.append(current_node)
+            closed_list.add(current_node.position)
 
             # Found the goal
             if current_node == end_node:
@@ -86,7 +77,6 @@ class pathplanning(Node):
                 return path[::-1]  # Return reversed path
 
             # Generate children
-            children = []
             for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]:  # Adjacent squares
 
                 # Get node position
@@ -97,32 +87,24 @@ class pathplanning(Node):
                     continue
 
                 # Create new node
-                new_node = Point(current_node, node_position)
-
-                # Append
-                children.append(new_node)
-
-            # Loop through children
-            for child in children:
-                skip = False
+                child = Point(current_node, node_position)
                 # Child is on the closed list
-                for closed_child in closed_list:
-                    if child == closed_child:
-                        skip = True
-
+                if child.position in closed_list:
+                    continue
                 # Create the f, g, and h values
+                dx = abs(child.position[0] - end_node.position[0])
+                dy = abs(child.position[1] - end_node.position[1])
                 child.g = current_node.g + 1
-                child.h = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
+                child.h = max(dx,dy)+ (min(dx,dy))*0.4142  # Using Octile distance for heuristic
                 child.f = child.g + child.h
 
                 # Child is already in the open list
-                for open_node in open_list:
-                    if child == open_node and child.g > open_node.g:
-                        skip = True
-                if skip:
+                if child.position in g_score and child.g >= g_score[child.position]: 
                     continue
                 # Add the child to the open list
-                open_list.append(child)
+                heapq.heappush(open_list, (child.f,iterations,child))
+                g_score[child.position] = child.g
+                iterations += 1
         return []  # No path found
         
         

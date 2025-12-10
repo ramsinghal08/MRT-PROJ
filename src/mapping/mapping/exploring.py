@@ -147,7 +147,7 @@ class Swarm(Node):
 
 def main():
     rclpy.init(args=None)
-    swarm = Swarm(5)
+    swarm = Swarm(1)
     swarm.see()
     swarm.map.update_frontiers(0)
 
@@ -177,7 +177,7 @@ def main():
         swarm.loadmap()
     for i in range(swarm.bot_count):
         if paths[i]:
-            while paths[i]:
+            while paths[100]:
                 next_step = paths[i].pop(0)
                 swarm.bots[i].move(next_step)
                 for x in range(swarm.bot_count):
