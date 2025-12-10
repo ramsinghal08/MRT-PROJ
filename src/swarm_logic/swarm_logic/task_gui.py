@@ -37,7 +37,7 @@ class TaskGuiNode(Node):
         
         # Subscribe to shelf info for items and drop-off locations
         self.shelf_sub = self.create_subscription(
-            Map, 'shelf_info', self.shelf_callback, 10
+            Map, 'shelf_info', self.shelf_callback, 4000
         )
         
         # Subscribe to map data for location validation
