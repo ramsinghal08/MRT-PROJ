@@ -26,8 +26,9 @@ class Swarm(Node):
         self.pastchosen_Frontiers = set()
         self.frontiercosts = [{} for _ in range(bot_count)]
         self.sendbotinfo = self.create_publisher(Map,'bot_info',10)
+        self.sendbot_task_info = self.create_publisher(Map,'bot_task_info',100)
         self.sendshelves = self.create_publisher(Map,'shelf_info',10)
-        self.to_move = self.create_subscription(BotMove,'bot_move',self.updatetasks,10)
+        self.to_move = self.create_subscription(BotMove,'bot_move',self.updatetasks,100)
         self.sentmap = []
     def loadmap(self):
         plt.clf()
@@ -47,11 +48,14 @@ class Swarm(Node):
             y1 = msg.init_y
             self.bots[i].path1 = self.pathplanner.nav(self.bots[i].coord,(x1,y1))
             self.bots[i].path2 = self.pathplanner.nav((x1,y1),(x2,y2))
+            self.get_logger().info(f"bot{i} going to {(x1,y1)} and then {(x2,y2)}")
         else:
             i = msg.bot_id
             x2 = msg.final_x
             y2 = msg.final_y
-            self.bots[i].path1 = self.pathplanner.nav(self.bots[i].coord,(x2,y2))
+            self.bots[i].path2 = self.pathplanner.nav(self.bots[i].coord,(x2,y2))
+            self.bots[i].path1 = []
+            # self.get_logger().info(f"bot{i} going to {(x2,y2)}")
             
     def send_bot_info(self):
         for i in range(self.bot_count):
@@ -59,6 +63,7 @@ class Swarm(Node):
             msg.x = self.bots[i].coord[0]
             msg.y = self.bots[i].coord[1]
             msg.status = self.bots[i].id
+            self.get_logger().info(f"published bot {msg.status}")
             self.sendbotinfo.publish(msg)
         msg=Map()
         msg.x=0
@@ -210,11 +215,12 @@ def main():
                 swarm.bots[i].justmove(next_step)
                 if not swarm.bots[i].path2:
                     msg = Map()
-                    msg.status = swarm.bots[1].id
+                    msg.status = swarm.bots[i].id
                     msg.x = swarm.bots[i].coord[0]
                     msg.y = swarm.bots[i].coord[1]
-                    swarm.sendbotinfo.publish(msg)
-    
+                    swarm.sendbot_task_info.publish(msg)
+                    print(f"info about bot {msg.status} sent")
+                    
 
 if __name__ == '__main__':
     main()

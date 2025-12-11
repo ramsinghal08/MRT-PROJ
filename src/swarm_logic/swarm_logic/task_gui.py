@@ -58,7 +58,7 @@ class TaskGuiNode(Node):
         
         if item_id not in self.items:
             self.items[item_id] = (drop_x, drop_y)
-            self.get_logger().info(f"Item {item_id} registered | Drop-off: ({drop_x}, {drop_y})")
+            # self.get_logger().info(f"Item {item_id} registered | Drop-off: ({drop_x}, {drop_y})")
     
     def map_callback(self, msg: Map):
         """Handle map data - updates location validity."""
@@ -68,7 +68,7 @@ class TaskGuiNode(Node):
         
         # Update map (status 0 = valid/free)
         self.map_dict[(x, y)] = status
-        self.get_logger().debug(f"Map update: ({x}, {y}) = {status}")
+        # self.get_logger().debug(f"Map update: ({x}, {y}) = {status}")
     
     def is_location_valid(self, x: int, y: int) -> bool:
         """Check if a pickup location is valid (status 0 = valid)."""
