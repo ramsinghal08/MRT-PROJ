@@ -55,7 +55,7 @@ class Swarm(Node):
             y2 = msg.final_y
             self.bots[i].path2 = self.pathplanner.nav(self.bots[i].coord,(x2,y2))
             self.bots[i].path1 = []
-            self.get_logger().info(f"bot{i} going to {(x2,y2)}")
+            self.get_logger().info(f"bot{i} going to {(x2,y2)} status of target : {self.map.grid[(x2,y2)]}")
             
     def send_bot_info(self):
         for i in range(self.bot_count):
@@ -160,7 +160,7 @@ class Swarm(Node):
 
 def main():
     rclpy.init(args=None)
-    swarm = Swarm(10)
+    swarm = Swarm(4)
     swarm.see()
     swarm.map.update_frontiers(0)
 
@@ -220,6 +220,10 @@ def main():
                     msg.y = swarm.bots[i].coord[1]
                     swarm.sendbot_task_info.publish(msg)
                     print(f"info about bot {msg.status} sent")
+            for x in range(swarm.bot_count):
+                swarm.map.grid[swarm.bots[x].coord] = 2
+                swarm.update_data()
+                swarm.loadmap()
                     
 
 if __name__ == '__main__':

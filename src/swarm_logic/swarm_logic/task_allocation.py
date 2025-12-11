@@ -113,21 +113,12 @@ class TaskAllocator(Node):
         self.create_subscription(Map, 'bot_info', self.bot_callback, 100)
         # Enabled with larger queue to store map data
         self.create_subscription(Map, 'send_map', self.map_callback, 4000)
-<<<<<<< HEAD
         self.create_subscription(Map, 'bot_task_info', self.bot_task_complete_callback, 400)
         # self.task_pub_to_path=self.create_publisher(TaskInfoPath, 'task_info_path', 10)
 
         self.task_pub_to_path=self.create_publisher(BotMove, 'bot_move', 100)
        
         self.bot_move_pub = self.create_publisher(BotMove, 'bot_move', 100)
-=======
-        self.create_subscription(Map, 'bot_task_info', self.bot_task_complete_callback, 40)
-        # self.task_pub_to_path=self.create_publisher(TaskInfoPath, 'task_info_path', 10)
-
-        self.task_pub_to_path=self.create_publisher(BotMove, 'bot_move', 10)
-       
-        self.bot_move_pub = self.create_publisher(BotMove, 'bot_move', 10)
->>>>>>> main
         
         self.get_logger().info("Task allocator initialised. Waiting for bot registration...")
 
