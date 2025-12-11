@@ -89,9 +89,9 @@ class branch_node(Node):  # The node branch will handle ros related works
 
     def publish_branch_info(self, branch):
         msg = BranchMsg()
-        self.get_logger().info(f"====== PUBLISHING BRANCH INFO ======")
+        # self.get_logger().info(f"====== PUBLISHING BRANCH INFO ======")
         print(branch.path)
-        self.get_logger().info(f"Publishing info of Branch {branch.id}")
+        # self.get_logger().info(f"Publishing info of Branch {branch.id}")
         
         if len(branch.path) > 0:
             if len(branch.path) == 1:
@@ -110,13 +110,13 @@ class branch_node(Node):  # The node branch will handle ros related works
         print(msg.member_ids)
         # msg.next_id = branch.prev.id if branch.prev else -1
         # print(msg.next_id)
-        self.get_logger().info(f"Branch {branch.id}: leader={branch.leader.id}, init_coord={init}, splitting={branch.spliting}")
-        self.get_logger().info(f"Subscriber count on branch_topic: {self.branch_pub.get_subscription_count()}")
+        # self.get_logger().info(f"Branch {branch.id}: leader={branch.leader.id}, init_coord={init}, splitting={branch.spliting}")
+        # self.get_logger().info(f"Subscriber count on branch_topic: {self.branch_pub.get_subscription_count()}")
         
         self.branch_pub.publish(msg)
         
-        self.get_logger().info(f"Branch {branch.id} info published successfully")
-        self.get_logger().info(f"====== PUBLISH COMPLETE ======")
+        # self.get_logger().info(f"Branch {branch.id} info published successfully")
+        # self.get_logger().info(f"====== PUBLISH COMPLETE ======")
 
     def move_members_callback(self, request, response):
         branch_id = request.branch_id
